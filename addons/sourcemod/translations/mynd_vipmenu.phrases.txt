@@ -1,0 +1,51 @@
+"Phrases"
+{
+	"MedicKit"
+	{
+		"en"	"A {green}MedKit {default}Have Been Dropped To You."
+		"pt"	"Um {green}Kit Médico {default}Foi-te Dropado."
+	}
+	
+	"WallHackGrenade"
+	{
+		"en"	"A {green}WallHack Grenade {default}Have Been Given To You."
+		"pt"	"Uma {green}Granada De WallHack {default}Foi-te Dada."
+	}
+	
+	"Grenade"
+	{
+		"en"	"A {green}HE Grenade {default}Have Been Given To You."
+		"pt"	"Uma {green}Granada Explosiva {default}Foi-te Dada."
+	}
+	
+	"FlashBang"
+	{
+		"en"	"A {green}Flashbang {default}Have Been Given To You."
+		"pt"	"Uma {green}Granada De Luz {default}Foi-te Dada."
+	}
+	
+	"VIPSpawn"
+	{
+		"#format" "{1:N}"
+		"en"	"{green}VIP {default}Player {green}{1} {default}Used Her {green}VIPSpawn{default}!"
+		"pt"	"O {green}VIP {1} {default}Usou o Seu {green}VIPSpawn{default}!"
+	}
+	
+	"VIPSpawn Used"
+	{
+		"en"	"You Already Used Your {green}VIPSpawn{default}!"
+		"pt"	"Já Usaste o Teu {green}VIPSpawn{default}!"
+	}
+	
+	"VIPSpawn VIP"
+	{
+		"en"	"You Need To Be a {green}VIP {default}To Use This Advantage."
+		"pt"	"Precisas De Ser {green}VIP {default}Para Usares Esta Vantagem."
+	}
+	
+	"VIP Not Dead"
+	{
+		"en"	"You Need To Be Dead To Use Your {green}VIPSpawn{default}!"
+		"pt"	"Precisas De Estar Morto Para Usares o Teu {green}VIPSpawn{default}!"
+	}
+}
