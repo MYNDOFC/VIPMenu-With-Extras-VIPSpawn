@@ -1,13 +1,17 @@
+#pragma semicolon 1
+#pragma tabsize 0
+
 #include <sourcemod>
 #include <cstrike>
 #include <sdktools>
 #include <sdkhooks>
-#include <colors>
+#include <MultiColors>
 
 #define PLUGIN_NAME "VIPMenu With Extras - CS:GO"
 #define PLUGIN_AUTHOR "MYND"
-#define PLUGIN_VERSION "1.0.0"
+#define PLUGIN_VERSION "1.1.0"
 
+bool UsedMenu[MAXPLAYERS] = false;
 bool revived[MAXPLAYERS+1] = false;
 ConVar g_Cvar_VIPSpawn;
 
@@ -20,12 +24,42 @@ public Plugin myInfo = {
 
 public OnPluginStart()
 {
+	HookEvent("round_start", RoundStart);
 	g_Cvar_VIPSpawn = CreateConVar("mynd_vipmenu_vipspawn", "1", "Turn On/Off User Can Use VIPSpawn", _, true, 0.0, true, 1.0);
 	
 	LoadTranslations("mynd_vipmenu.phrases");
 	RegAdminCmd("sm_vipmenu", MenuVIP, ADMFLAG_RESERVATION, "Opens VIPMenu For a VIP Player");
-	RegConsoleCmd("sm_vipspawn", VIPSpawn);
+	RegAdminCmd("sm_vipspawn", VIPSpawn, ADMFLAG_RESERVATION);
 	AutoExecConfig(true, "mynd_vipmenu");
+	HookEvent("decoy_firing", OnDecoyFiring);
+}
+
+public Action RoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+    for(new i = 1; i <= MaxClients; i++)
+	{
+		UsedMenu[i] = false;
+		int flags = GetUserFlagBits(i);
+	    if(flags & ADMFLAG_RESERVATION) 
+	    {
+	    	ShowVIPMenu(i);
+        }
+    }
+}
+
+public void OnDecoyFiring(Event event, const char[] name, bool dontBroadcast)
+{
+	int userid = GetEventInt(event, "userid");
+	int client = GetClientOfUserId(userid);
+
+	float f_Pos[3];
+	int entityid = GetEventInt(event, "entityid");
+	f_Pos[0] = GetEventFloat(event, "x");
+	f_Pos[1] = GetEventFloat(event, "y");
+	f_Pos[2] = GetEventFloat(event, "z");
+
+	TeleportEntity(client, f_Pos, NULL_VECTOR, NULL_VECTOR);
+	RemoveEdict(entityid);
 }
 
 public Action:MenuVIP(client, args)
@@ -38,13 +72,19 @@ public Action:MenuVIP(client, args)
 
 stock ShowVIPMenu(client)
 {
-    new Handle:VIPMenu = CreateMenu(VIPMenu_Handler);
-    SetMenuTitle(VIPMenu, "VIPMenu Items:");
-    AddMenuItem(VIPMenu, "MedKit", "MedKit");
-    AddMenuItem(VIPMenu, "WHNade", "WH Grenade");
-    AddMenuItem(VIPMenu, "HENade", "HE Grenade");
-    AddMenuItem(VIPMenu, "Flashbang", "Flashbang");
-    DisplayMenu(VIPMenu, client, MENU_TIME_FOREVER);
+    if(IsClientInGame(client) && IsPlayerAlive(client))
+   {
+   	    UsedMenu[client] = true;
+		Menu menu = new Menu(VIPMenu_Handler);
+		menu.SetTitle("MenuVIP - Items:");
+		menu.AddItem("MedKit", "MedicKit");
+		menu.AddItem("WHNade", "WH Grenade");
+		menu.AddItem("HENade", "HE Grenade");
+		menu.AddItem("Flashbang", "Flashbang");
+		menu.AddItem("TPNade", "Teleport Nade");
+		menu.ExitButton = false;
+		menu.Display(client, MENU_TIME_FOREVER);
+   }
 }
 
 public VIPMenu_Handler(Handle:VIPMenu, MenuAction:Option, client, VIPMenuIndex)
@@ -56,23 +96,28 @@ public VIPMenu_Handler(Handle:VIPMenu, MenuAction:Option, client, VIPMenuIndex)
 
       if(StrEqual(selectedBonus, "MedKit"))
       {
-        CPrintToChat(client, "\x01 \x04[VIPMenu By MYND] \x01%t", "MedicKit");
+      	CPrintToChat(client, "{darkred}[VIPMenu By MYND] {default}%t", "MedicKit");
         GivePlayerItem(client, "weapon_healthshot");
       }
       if(StrEqual(selectedBonus, "WHNade"))
       {
-        CPrintToChat(client, "\x01 \x04[VIPMenu By MYND] \x01%t", "WallHackGrenade");
+        CPrintToChat(client, "{darkred}[VIPMenu By MYND] {default}%t", "WallHackGrenade");
         GivePlayerItem(client, "weapon_tagrenade");
       }
       if(StrEqual(selectedBonus, "HENade"))
       {
-        CPrintToChat(client, "\x01 \x04[VIPMenu By MYND] \x01%t", "Grenade");
+        CPrintToChat(client, "{darkred}[VIPMenu By MYND] {default}%t", "Grenade");
         GivePlayerItem(client, "weapon_hegrenade");
       }
       if(StrEqual(selectedBonus, "Flashbang"))
       {
-        CPrintToChat(client, "\x01 \x04[VIPMenu By MYND] \x01%t", "FlashBang");
+        CPrintToChat(client, "{darkred}[VIPMenu By MYND] {default}%t", "FlashBang");
         GivePlayerItem(client, "weapon_flashbang");
+      }
+      if(StrEqual(selectedBonus, "TPNade"))
+      {
+      	CPrintToChat(client, "{darkred}[VIPMenu By MYND] {default}%t", "Teleport");
+      	GivePlayerItem(client, "weapon_decoy");
       }
     }
     else if (Option == MenuAction_End)
@@ -93,36 +138,31 @@ public Action VIPSpawn(int client, int args)
 	{
 		if (!IsPlayerAlive(client))
 		{
-			if (HasClientFlag(client, ADMFLAG_RESERVATION))
+			if(client)
 			{
 				if (revived[client] == false)
 				{
 					CS_RespawnPlayer(client);
-					CPrintToChatAll("\x01 \x04[VIPMenu By MYND] \x01%t", "VIPSpawn", client);
+					CPrintToChatAll("{darkred}[VIPMenu By MYND] {default}%t", "VIPSpawn", client);
 					revived[client] = true;
 				}
 				else
 				{
-					Format(message, sizeof(message), "\x01 \x04[VIPMenu By MYND] \x01%t", "VIPSpawn Used", client);
+					Format(message, sizeof(message), "{darkred}[VIPMenu By MYND] {default}%t", "VIPSpawn Used", client);
 					CPrintToChat(client, message);
 				}
 			}
 			else
 			{
-				Format(message, sizeof(message), "\x01 \x04[VIPMenu By MYND] \x01%t", "VIPSpawn VIP", client);
+				Format(message, sizeof(message), "{darkred}[VIPMenu By MYND] {default}%t", "VIPSpawn VIP", client);
 				CPrintToChat(client, message);
 			}
 		}
 		else
 		{
-			Format(message, sizeof(message), "\x01 \x04[VIPMenu By MYND] \x01%t", "VIP Not Dead", client);
+			Format(message, sizeof(message), "{darkred}[VIPMenu By MYND] {default}%t", "VIP Not Dead", client);
 			CPrintToChat(client, message);
 		}
 	}
 	return Plugin_Handled;
-}
-
-public bool HasClientFlag(int client, int flag)
-{
-	return CheckCommandAccess(client, "", flag, true);
 }
